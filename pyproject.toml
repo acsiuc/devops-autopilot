@@ -7,7 +7,10 @@ authors = [
     { name = "acsiuc", email = "florinaxiuc22@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "anthropic>=2.3.0",
+    "python-dotenv>=1.2.4",
+]
 
 [project.scripts]
 devops-autopilot = "devops_autopilot:main"

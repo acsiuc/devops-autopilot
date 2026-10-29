@@ -32,14 +32,6 @@ tools = [
     }
 ]
 
-message = client.messages.create(
-    model="claude-opus-5-5",
-    max_tokens=1000,
-    tools=tools,
-    messages=[{"role": "user", "content": question}],
-)
-
-
 def tool_results(message):
     tool_results = []
     for block in message.content:
@@ -54,18 +46,28 @@ def tool_results(message):
     return tool_results
 
 
-second_message = client.messages.create(
-    model="claude-opus-5-5",
-    max_tokens=1000,
-    messages=[
-        {
-            "role": "user",
-            "content": [{"type": "text", "text": question}],
-        },
-        {"role": "assistant", "content": message.content},
-        {"role": "user", "content": tool_results(message)}
-    ],
-)
+def agent_loop(question):
+    list = [{"role":"user", "content":question}]
 
-print(message.model_dump_json(indent=2))
+    for x in range(9):
+
+        message = client.messages.create(
+            model="claude-opus-5-5",
+            max_tokens=1000,
+            tools=tools,
+            messages = list
+        )
+        list.append({"role":"assistant", "content":message.content})
+        if message.stop_reason == "tool_use":
+            tool_output = tool_results(message)
+            list.append({"role":"user", "content": tool_output})
+        elif message.stop_reason == "end_turn":
+            for block in message.content:
+                if block.type == 'text':
+                    return block.text
+
+    return "Stopped after 9 turns without an answer."
+
+
+print(agent_loop(question))
 

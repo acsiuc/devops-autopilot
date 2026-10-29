@@ -5,6 +5,7 @@ load_dotenv()
 
 client = anthropic.Anthropic()
 
+question = "Check the state of the DB"
 
 def get_cpu(service):
     if service == "database":
@@ -23,6 +24,7 @@ tools = [
                 "service": {
                     "type": "string",
                     "description": "Either the web or the database can be checked",
+                    "enum":["web", "database"]
                 }
             },
             "required": ["service"],
@@ -34,7 +36,7 @@ message = client.messages.create(
     model="claude-opus-5-5",
     max_tokens=1000,
     tools=tools,
-    messages=[{"role": "user", "content": "Check the state of the service."}],
+    messages=[{"role": "user", "content": question}],
 )
 
 
@@ -58,12 +60,12 @@ second_message = client.messages.create(
     messages=[
         {
             "role": "user",
-            "content": [{"type": "text", "text": "Check the state of the service"}],
+            "content": [{"type": "text", "text": question}],
         },
         {"role": "assistant", "content": message.content},
         {"role": "user", "content": tool_results(message)}
     ],
 )
 
-print(second_message.model_dump_json(indent=2))
+print(message.model_dump_json(indent=2))
 

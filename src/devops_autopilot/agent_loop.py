@@ -1,5 +1,8 @@
+import typing
+
 import anthropic
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 from devops_autopilot.tool_dispatch import tool_results
 from devops_autopilot.tools import tools
@@ -8,25 +11,40 @@ load_dotenv()
 
 client = anthropic.Anthropic()
 
-question = "Check the health of my RAG system"
+question = "My RAG app is returning errors"
+
+class Diagnosis(BaseModel):
+    container: typing.Literal["rag-api", "rag-postgres", "rag-frontend"] | None
+    fault_type: (
+        typing.Literal["stopped_container", "misconfiguration", "crashed"] | None
+    )
+    explanation: str
+
+class AgentResult(BaseModel):
+     status: typing.Literal['done', 'max_turns', 'stopped']
+     diagnosis: Diagnosis | None = None
+
 
 def agent_loop(question):
     message_history = [{"role": "user", "content": question}]
 
     for x in range(9):
-        message = client.messages.create(
-            model = "claude-opus-5-5", max_tokens = 2000, tools=tools, messages=message_history)
+        message = client.messages.parse(
+            model="claude-opus-5-5",
+            max_tokens=2000,
+            tools=tools,
+            messages=message_history,
+            output_format=Diagnosis,
+        )
         message_history.append({"role": "assistant", "content": message.content})
         if message.stop_reason == "tool_use":
             message_history.append({"role": "user", "content": tool_results(message)})
         elif message.stop_reason == "end_turn":
-            for block in message.content:
-                if block.type == "text":
-                    return block.text
+                return AgentResult(status = "done", diagnosis = message.parsed_output)
         else:
-            return f"The agent loop stopped because the stop_reason was {message.stop_reason}"
+            return AgentResult(status = "stopped")
 
-    return "Stopped after 9 turns without an answer."
+    return AgentResult(status = "max_turns")
 
 
 if __name__ == "__main__":

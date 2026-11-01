@@ -13,10 +13,13 @@ client = anthropic.Anthropic()
 
 question = "My RAG app is returning errors"
 
+type ContainerType = typing.Literal["rag-api", "rag-postgres", "rag-frontend"]
+type FaultType = typing.Literal["stopped_container", "misconfiguration", "crashed"]
+
 class Diagnosis(BaseModel):
-    container: typing.Literal["rag-api", "rag-postgres", "rag-frontend"] | None
+    container:  ContainerType | None
     fault_type: (
-        typing.Literal["stopped_container", "misconfiguration", "crashed"] | None
+         FaultType | None
     )
     explanation: str
 

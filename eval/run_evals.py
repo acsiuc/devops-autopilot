@@ -39,9 +39,9 @@ postgres_stopped = EvalCase(
 )
 
 
-def check_container_stoppage():
+def run_case(case: EvalCase):
     try:
-        stop_postgres()
+        case.inject()
         response = httpx.post(
             "http://localhost:8080/ask", json={"question": "What is CORS?"}
         )
@@ -52,16 +52,16 @@ def check_container_stoppage():
         agent_response = agent_loop(question)
         if (
             agent_response.status == "done"
-            and agent_response.diagnosis.container == "rag-postgres"
-            and agent_response.diagnosis.fault_type == "stopped_container"
+            and agent_response.diagnosis.container == case.expected_container
+            and agent_response.diagnosis.fault_type == case.expected_fault
         ):
             return "passed"
         else:
             return "failed"
 
     finally:
-        start_postgres()
+        case.undo()
 
 
 if __name__ == "__main__":
-    print(check_container_stoppage())
+    print(run_case(postgres_stopped))

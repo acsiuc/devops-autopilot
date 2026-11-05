@@ -1,4 +1,6 @@
-import typing
+import os
+import subprocess
+import time
 from collections.abc import Callable
 
 import docker
@@ -10,6 +12,8 @@ from devops_autopilot.agent_loop import ContainerType, FaultType, agent_loop
 client = docker.from_env()
 
 question = "My RAG app is showing errors"
+
+rag_directory = "/home/axiuc-fedor/rag-model-fastapi"
 
 
 class EvalCase(BaseModel):
@@ -28,6 +32,26 @@ def stop_postgres():
 def start_postgres():
     container = client.containers.get("rag-postgres")
     container.start()
+
+def break_api_key():
+    fake_env = os.environ.copy()
+    fake_env['ANTHROPIC_API_KEY'] = 'fake_key'
+    subprocess.run(['docker', 'compose', 'up', '-d', '--force-recreate', 'rag-api'], cwd=rag_directory, env = fake_env, check=False)
+
+
+def restore_api_key():
+    restore_env = os.environ.copy()
+    restore_env.pop('ANTHROPIC_API_KEY', None)
+    subprocess.run(['docker', 'compose', 'up', '-d','--force-recreate', 'rag-api'], cwd=rag_directory, check = False, env=restore_env)
+
+
+break_claude_api_key = EvalCase(
+    name = "break_claude_api_key",
+    expected_container='rag-api',
+    expected_fault='misconfiguration',
+    inject=break_api_key,
+    undo=restore_api_key,
+)
 
 
 postgres_stopped = EvalCase(

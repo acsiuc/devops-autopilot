@@ -62,15 +62,20 @@ postgres_stopped = EvalCase(
     undo=start_postgres,
 )
 
-case_list = [postgres_stopped]
+case_list = [postgres_stopped, break_claude_api_key]
 
 
 def run_case(case: EvalCase):
     try:
         case.inject()
-        response = httpx.post(
-            "http://localhost:8080/ask", json={"question": "What is CORS?"}
-        )
+
+        for x in range(5):
+            response = httpx.post(
+                        "http://localhost:8080/ask", json={"question": "What is CORS?"}
+                    )
+            if response.status_code == 500:
+                break
+            time.sleep(5)
 
         if response.status_code != 500:
             return "injection_failed"

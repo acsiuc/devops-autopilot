@@ -38,6 +38,8 @@ postgres_stopped = EvalCase(
     undo=start_postgres,
 )
 
+case_list = [postgres_stopped]
+
 
 def run_case(case: EvalCase):
     try:
@@ -62,6 +64,20 @@ def run_case(case: EvalCase):
     finally:
         case.undo()
 
+def run_all_cases(cases):
+
+    succesful = 0
+
+    for case in cases:
+
+        case_result = run_case(case)
+        print(f"{case.name}: {case_result}")
+
+        if case_result== 'passed':
+            succesful += 1
+
+    print(f"passed: {succesful} / {len(cases)}")
+
 
 if __name__ == "__main__":
-    print(run_case(postgres_stopped))
+    run_all_cases(case_list)

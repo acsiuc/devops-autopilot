@@ -71,7 +71,7 @@ def run_case(case: EvalCase):
         if case.name == "postgres_stopped":
             for x in range(3):
                 response = httpx.post(
-                    "http://localhost:8080/ask", json={"question": "What is CORS?"})
+                    "http://localhost:8080/ask", json={"question": "What is CORS?"}, timeout = 20.0)
                 if response.status_code == 200:
                     break
                 time.sleep(20)
@@ -82,7 +82,7 @@ def run_case(case: EvalCase):
 
         for x in range(5):
             response = httpx.post(
-                        "http://localhost:8080/ask", json={"question": "What is CORS?"}
+                        "http://localhost:8080/ask", json={"question": "What is CORS?",}, timeout = 20.0
                     )
             print(f"try {x}: {response.status_code}")
             if response.status_code == 500:

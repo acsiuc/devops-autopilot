@@ -67,16 +67,14 @@ case_list = [postgres_stopped, break_claude_api_key]
 
 def run_case(case: EvalCase):
     try:
-
-        if case.name == "postgres_stopped":
-            for x in range(3):
-                response = httpx.post(
-                    "http://localhost:8080/ask", json={"question": "What is CORS?"}, timeout = 20.0)
-                if response.status_code == 200:
-                    break
-                time.sleep(20)
-            if response.status_code != 200:
-                return "not_ready"
+        for x in range(3):
+            response = httpx.post(
+                "http://localhost:8080/ask", json={"question": "What is CORS?"}, timeout = 20.0)
+            if response.status_code == 200:
+                break
+            time.sleep(20)
+        if response.status_code != 200:
+            return "not_ready"
 
         case.inject()
 
